@@ -1,10 +1,10 @@
-name: Python CI
+name: Factorial CI
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
   pull_request:
-    branches: ["main"]
 
 jobs:
   test:
@@ -16,22 +16,49 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: "pip"
+          python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirement.txt
 
       - name: Run tests
         run: pytest
 
-      - name: Build source artifact
-        run: |
-          mkdir -p dist
-          cp factorial.py test_factorial.py requirements.txt dist/
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Upload artifact
+      - name: Create build package
+        run: |
+          mkdir build
+          cp factorial.py build/
+          cp requirement.txt build/
+
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: factorial-python
-          path: dist/
+          name: factorial-build
+          path: build/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: factorial-build
+          path: deployment/
+
+      - name: Show deployment files
+        run: |
+          echo "Files to deploy:"
+          ls -R deployment/
+
+      - name: Deploy application
+        run: |
+          echo "Deploying factorial application..."
+          echo "Deployment successful!"
